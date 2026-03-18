@@ -20,5 +20,9 @@
     "name": "Croffle Team",
     "email": "support@croffledev.kr",
     "url": "https://github.com/team-croffle"
-  }
+  },
+  "dependencies": {
+    "@types/node": "^25.5.0"
+  },
+  "packageManager": "yarn@4.13.0"
 }
