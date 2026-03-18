@@ -1,13 +1,24 @@
 {
   "name": "@croffledev/croffle-types",
   "version": "1.0.0",
-  "description": "Shared common types and utilities for the Croffle application.",
-  "license": "ISC",
-  "author": "Croffle Dev.",
+  "description": "Croffle project type definitions.",
+  "license": "MIT",
   "type": "module",
   "main": "",
-  "types": "src/index.d.ts",
+  "types": "index.d.ts",
   "files": [
-    "src"
-  ]
+    "index.d.ts"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/team-croffle/croffle-types.git"
+  },
+  "author": {
+    "name": "Croffle Team",
+    "email": "support@croffledev.kr",
+    "url": "https://github.com/team-croffle"
+  }
 }
