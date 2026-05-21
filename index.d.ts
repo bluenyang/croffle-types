@@ -61,59 +61,12 @@ export interface PluginInfo {
   };
 }
 
-export enum AppSettingLanguage {
-  KO = "ko",
-  EN = "en",
-}
-
-export enum AppSettingTheme {
-  LIGHT = "light",
-  DARK = "dark",
-  SYSTEM = "system",
-}
-
-export enum AppSettingStartupBehavior {
-  OPEN_LAST_SESSION = "openLastSession",
-  OPEN_NEW_WINDOW = "openNewWindow",
-  DO_NOTHING = "doNothing",
-}
-
-export enum CalendarView {
-  DAY = "day",
-  WEEK = "week",
-  MONTH = "month",
-  YEAR = "year",
-}
-
-export enum CalendarWeekStartDay {
-  SUNDAY = "sunday",
-  MONDAY = "monday",
-}
-
-export enum CalendarTimeFormat {
-  H12 = "12h",
-  H24 = "24h",
-}
-
-export interface AppSettings {
-  general: {
-    language: AppSettingLanguage;
-    theme: AppSettingTheme;
-    autoUpdate: boolean;
-    startupBehavior: AppSettingStartupBehavior;
-    startOnSystemBoot: boolean;
-    startMinimized: boolean;
-  };
-  calendar: {
-    defaultView: CalendarView;
-    weekStartDay: CalendarWeekStartDay;
-    showWeekNumbers: boolean;
-    timeFormat: CalendarTimeFormat;
-  };
-  notifications: {
-    enabled: boolean;
-    defaultReminderMinutes: number;
-  };
+export interface ConfigItemSchema<T = any> {
+  type: "string" | "number" | "boolean" | "select" | "path";
+  label: string;
+  description?: string;
+  defaultValue: T;
+  options?: T extends string | number ? { label: string; value: T }[] : never; // select
 }
 
 export enum ClipboardDataType {
@@ -244,15 +197,9 @@ export namespace tags {
 }
 
 export namespace schedules {
-  export function getAll(period: {
-    start: string;
-    end: string;
-  }): Promise<Schedule[]>;
+  export function getAll(period: { start: string; end: string }): Promise<Schedule[]>;
   export function create(data: Partial<Schedule>): Promise<Schedule>;
-  export function update(
-    id: string,
-    data: Partial<Schedule>,
-  ): Promise<Schedule>;
+  export function update(id: string, data: Partial<Schedule>): Promise<Schedule>;
   export function remove(id: string): Promise<boolean>;
   export function exportSchedulesToFile(period?: {
     start: string;
@@ -268,10 +215,7 @@ export namespace pluginInfo {
   export function getEnabled(): Promise<PluginInfo[]>;
   export function getByName(name: string): Promise<PluginInfo | null>;
   export function install(data: Partial<PluginInfo>): Promise<PluginInfo>;
-  export function toggle(
-    name: string,
-    enable: boolean,
-  ): Promise<PluginInfo | null>;
+  export function toggle(name: string, enable: boolean): Promise<PluginInfo | null>;
   export function uninstall(name: string): Promise<boolean>;
 }
 
@@ -280,28 +224,19 @@ export namespace search {
 }
 
 export namespace settings {
-  export function getAll(): Promise<AppSettings>;
-  export function getOf(key: string): Promise<AppSettings[keyof AppSettings]>;
-  export function update(
-    newSettings: Partial<AppSettings>,
-  ): Promise<AppSettings>;
+  export function get<T>(pluginId: string, key: string): T;
+  export function set<T>(pluginId: string, key: string, value: T): void;
 }
 
 export namespace pluginStorage {
   export function get(pluginId: string, key: string): Promise<string | null>;
-  export function set(
-    pluginId: string,
-    key: string,
-    value: string,
-  ): Promise<void>;
+  export function set(pluginId: string, key: string, value: string): Promise<void>;
 }
 
 export namespace os {
   export function showNotification(title: string, body: string): Promise<void>;
   export function getClipboard(): Promise<ClipboardResult>;
-  export function setClipboard(
-    data: ClipboardTextData | ClipboardImageData,
-  ): Promise<void>;
+  export function setClipboard(data: ClipboardTextData | ClipboardImageData): Promise<void>;
 }
 
 export namespace http {
@@ -330,10 +265,7 @@ export namespace event {
    * @param callback callback function
    * @returns unsubscribe function
    */
-  export function on(
-    type: string,
-    callback: (payload: unknown) => void,
-  ): () => void;
+  export function on(type: string, callback: (payload: unknown) => void): () => void;
 }
 
 export const base: {
@@ -362,21 +294,12 @@ export interface PluginSessionAPI {
 }
 
 export const enums: {
-  AppSettingLanguage: typeof AppSettingLanguage;
-  AppSettingTheme: typeof AppSettingTheme;
-  AppSettingStartupBehavior: typeof AppSettingStartupBehavior;
-  CalendarView: typeof CalendarView;
-  CalendarWeekStartDay: typeof CalendarWeekStartDay;
-  CalendarTimeFormat: typeof CalendarTimeFormat;
   ClipboardDataType: typeof ClipboardDataType;
   AppEventType: typeof AppEventType;
 };
 
 export const ui: {
-  registerView: (
-    viewId: string,
-    renderFn: (container: HTMLElement) => void,
-  ) => void;
+  registerView: (viewId: string, renderFn: (container: HTMLElement) => void) => void;
   registerContextMenu: (
     target: string,
     command: string,
