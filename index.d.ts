@@ -29,23 +29,62 @@ export interface SearchQuery {
 }
 
 export interface FeatureView {
-  id: string; // 각 메뉴를 식별할 고유 ID (플러그인별 고유값)
-  title: string; // 사용자에게 보여줄 한글 제목
-  subtitle: string; // 디자인을 위한 영문 부제목
-  icon: unknown; // 표시할 아이콘 컴포넌트
-  url: string; // 클릭 시 이동할 경로
-  active?: boolean; // 현재 활성화 상태 여부 (선택적)
-  pluginName?: string; // 해당 메뉴를 제공하는 플러그인 이름 (관리용)
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: unknown;
+  url: string;
+  active?: boolean;
+  pluginName?: string;
 }
 
 export interface FeatureContextMenu {
-  id: string; // 메뉴의 고유 식별자 ex) add-schedule, delete-schedule
-  label: string; // 메뉴에 표시될 텍스트
-  action: (targetElement: HTMLElement | null) => void; // 메뉴 클릭 시 실행될 함수
+  id: string;
+  label: string;
+  action: (targetElement: HTMLElement | null) => void;
   condition?: (targetElement: HTMLElement | null) => boolean;
-  disabled?: boolean; // 메뉴 활성화 여부 (선택 사항)
-  targetView?: string[]; // 메뉴가 표시될 대상 (viewId)
+  disabled?: boolean;
+  targetView?: string[];
 }
+
+/** 설정 항목 스키마 (extension SDK / manifest 공용) */
+export type ConfigItemType = "string" | "number" | "boolean" | "select" | "path";
+
+export interface ConfigItemSchema<T = unknown> {
+  type: ConfigItemType;
+  label: string;
+  description?: string;
+  defaultValue: T;
+  options?: Array<{ label: string; value: T extends string | number ? T : never }>;
+}
+
+/** extension이 기여하는 설정 섹션 (선언형) */
+export interface SettingsSectionContribution {
+  id: string;
+  title?: string;
+  description?: string;
+  items: Record<string, ConfigItemSchema>;
+}
+
+/** extension이 기여하는 설정 탭 */
+export interface SettingsTabContribution {
+  id: string;
+  label: string;
+  icon?: unknown;
+  pluginId: string;
+  pluginName?: string;
+  order?: number;
+  /** 커스텀 패널 렌더러 (Vue 외부 DOM 마운트) */
+  render?: (container: HTMLElement) => void;
+  /** 선언형 스키마 섹션 (render와 동시 사용 불가) */
+  sections?: SettingsSectionContribution[];
+}
+
+/** manifest(plugin.json)에 선언 가능한 설정 탭 메타 (render 제외) */
+export type SettingsTabManifest = Omit<
+  SettingsTabContribution,
+  "pluginId" | "pluginName" | "render"
+>;
 
 export interface PluginInfo {
   enabled: boolean;
@@ -58,15 +97,63 @@ export interface PluginInfo {
   features: {
     views?: FeatureView[];
     contextMenus?: FeatureContextMenu[];
+    settingsTabs?: SettingsTabManifest[];
   };
 }
 
-export interface ConfigItemSchema<T = any> {
-  type: "string" | "number" | "boolean" | "select" | "path";
-  label: string;
-  description?: string;
-  defaultValue: T;
-  options?: T extends string | number ? { label: string; value: T }[] : never; // select
+export enum AppSettingLanguage {
+  KO = "ko",
+  EN = "en",
+}
+
+export enum AppSettingTheme {
+  LIGHT = "light",
+  DARK = "dark",
+  SYSTEM = "system",
+}
+
+export enum AppSettingStartupBehavior {
+  OPEN_LAST_SESSION = "openLastSession",
+  OPEN_NEW_WINDOW = "openNewWindow",
+  DO_NOTHING = "doNothing",
+}
+
+export enum CalendarView {
+  DAY = "day",
+  WEEK = "week",
+  MONTH = "month",
+  YEAR = "year",
+}
+
+export enum CalendarWeekStartDay {
+  SUNDAY = "sunday",
+  MONDAY = "monday",
+}
+
+export enum CalendarTimeFormat {
+  H12 = "12h",
+  H24 = "24h",
+}
+
+export interface AppSettings {
+  general: {
+    language: AppSettingLanguage;
+    theme: AppSettingTheme;
+    autoUpdate: boolean;
+    startupBehavior: AppSettingStartupBehavior;
+    startOnSystemBoot: boolean;
+    startMinimized: boolean;
+  };
+  calendar: {
+    defaultView: CalendarView;
+    weekStartDay: CalendarWeekStartDay;
+    showWeekNumbers: boolean;
+    timeFormat: CalendarTimeFormat;
+  };
+  notifications: {
+    enabled: boolean;
+    defaultReminderMinutes: number;
+  };
 }
 
 export enum ClipboardDataType {
@@ -97,9 +184,7 @@ export interface HttpResponse<T = unknown> {
   data: T | null;
 }
 
-// IPC Event Types in main process
 export enum AppEventType {
-  // Schedule
   SCHEDULE_GET = "schedule:get",
   SCHEDULE_CREATE = "schedule:create",
   SCHEDULE_UPDATE = "schedule:update",
@@ -107,14 +192,12 @@ export enum AppEventType {
   SCHEDULE_EXPORT_TO_FILE = "schedule:exportToFile",
   SCHEDULE_IMPORT_FROM_FILE = "schedule:importFromFile",
 
-  // Tag
   TAG_GET = "tag:getAll",
   TAG_GET_BY_NAME = "tag:getByName",
   TAG_CREATE = "tag:create",
   TAG_UPDATE = "tag:update",
   TAG_DELETE = "tag:delete",
 
-  // Plugin Info
   PLUGIN_INFO_GET_INSTALLED = "pluginInfo:getInstalled",
   PLUGIN_INFO_GET_ENABLED = "pluginInfo:getEnabled",
   PLUGIN_INFO_GET_BY_NAME = "pluginInfo:getByName",
@@ -122,17 +205,14 @@ export enum AppEventType {
   PLUGIN_INFO_UPDATE = "pluginInfo:update",
   PLUGIN_INFO_DELETE = "pluginInfo:delete",
 
-  // Plugin Storage
   PLUGIN_STORAGE_GET = "pluginStorage:get",
   PLUGIN_STORAGE_SET = "pluginStorage:set",
   PLUGIN_STORAGE_DELETE = "pluginStorage:delete",
 
-  // Settings
   SETTINGS_GET = "settings:get",
   SETTINGS_GET_OF = "settings:getOf",
   SETTINGS_UPDATE = "settings:update",
 
-  // Window
   WINDOW_MINIMIZE = "window:minimize",
   WINDOW_RESTORE = "window:restore",
   WINDOW_MAXIMIZE = "window:maximize",
@@ -142,34 +222,37 @@ export enum AppEventType {
   WINDOW_SHOW = "window:show",
   WINDOW_HIDE = "window:hide",
 
-  // OS Service
   NATIVE_OS_NOTIFICATION = "nativeOs:notification",
   NATIVE_OS_CLIPBOARD_GET = "nativeOs:clipboard:get",
   NATIVE_OS_CLIPBOARD_SET = "nativeOs:clipboard:set",
 
-  // HTTP Service
   HTTP_SERVICE_GET = "httpService:get",
   HTTP_SERVICE_POST = "httpService:post",
 
-  // Plugin
   PLUGIN_INSTALL = "plugin:install",
   PLUGIN_TOGGLE = "plugin:toggle",
   PLUGIN_UNINSTALL = "plugin:uninstall",
 
-  // Plugin Session Storage
   PLUGIN_SESSION_STORAGE_GET = "sessionStorage:get",
   PLUGIN_SESSION_STORAGE_SET = "sessionStorage:set",
   PLUGIN_SESSION_STORAGE_CLEAR = "sessionStorage:clear",
   PLUGIN_SESSION_STORAGE_DELETE = "sessionStorage:delete",
   PLUGIN_SESSION_STORAGE_CLEAR_ALL = "sessionStorage:clearAll",
 
-  // Background works
   SCHEDULER_REGISTER = "scheduler:register",
   SCHEDULER_UNREGISTER = "scheduler:unregister",
 
-  // UI Extensions
   UI_ADD_MENU_ITEM = "ui:addMenuItem",
   UI_CONTEXT_MENU_ADD_ITEM = "ui:contextMenu:addItem",
+}
+
+/** ui.registerSettingsTab 옵션 */
+export interface RegisterSettingsTabOptions {
+  label: string;
+  icon?: unknown;
+  order?: number;
+  render?: (container: HTMLElement) => void;
+  sections?: SettingsSectionContribution[];
 }
 
 export interface PluginContext {
@@ -223,9 +306,24 @@ export namespace search {
   export function search(query: SearchQuery): Promise<Schedule[]>;
 }
 
+/** 앱 전역 설정 (settings.json) */
 export namespace settings {
-  export function get<T>(pluginId: string, key: string): T;
-  export function set<T>(pluginId: string, key: string, value: T): void;
+  export function getAll(): Promise<AppSettings>;
+  export function getOf(key: string): Promise<AppSettings[keyof AppSettings]>;
+  export function update(newSettings: Partial<AppSettings>): Promise<AppSettings>;
+}
+
+/** 플러그인별 설정 저장소 (pluginStorage 기반) */
+export namespace pluginSettings {
+  export function get<T = Record<string, unknown>>(
+    pluginId: string,
+    storageKey?: string,
+  ): Promise<T>;
+  export function set(
+    pluginId: string,
+    values: Record<string, unknown>,
+    storageKey?: string,
+  ): Promise<void>;
 }
 
 export namespace pluginStorage {
@@ -253,18 +351,7 @@ export namespace http {
 }
 
 export namespace event {
-  /**
-   * Send event to all windows
-   * @param type event type
-   * @param payload event payload
-   */
   export function emit(type: string, payload: unknown): void;
-  /**
-   * Listen to event from all windows
-   * @param type event type
-   * @param callback callback function
-   * @returns unsubscribe function
-   */
   export function on(type: string, callback: (payload: unknown) => void): () => void;
 }
 
@@ -275,14 +362,7 @@ export const base: {
   pluginInfo: typeof pluginInfo;
   search: typeof search;
   settings: typeof settings;
-};
-
-export const app: {
-  os: typeof os;
-  http: typeof http;
-  storage: typeof pluginStorage;
-  event: typeof event;
-  session: PluginSessionAPI;
+  pluginSettings: typeof pluginSettings;
 };
 
 export interface PluginSessionAPI {
@@ -293,7 +373,21 @@ export interface PluginSessionAPI {
   clearAll: () => Promise<void>;
 }
 
+export const app: {
+  os: typeof os;
+  http: typeof http;
+  storage: typeof pluginStorage;
+  event: typeof event;
+  session: PluginSessionAPI;
+};
+
 export const enums: {
+  AppSettingLanguage: typeof AppSettingLanguage;
+  AppSettingTheme: typeof AppSettingTheme;
+  AppSettingStartupBehavior: typeof AppSettingStartupBehavior;
+  CalendarView: typeof CalendarView;
+  CalendarWeekStartDay: typeof CalendarWeekStartDay;
+  CalendarTimeFormat: typeof CalendarTimeFormat;
   ClipboardDataType: typeof ClipboardDataType;
   AppEventType: typeof AppEventType;
 };
@@ -306,4 +400,9 @@ export const ui: {
     label: string,
     callback: (target: string) => void,
   ) => void;
+  /**
+   * 설정 모달에 탭을 추가합니다.
+   * @param tabId 고유 탭 ID (플러그인 ID와 조합해 `${pluginId}:${tabId}` 형태로 저장됨)
+   */
+  registerSettingsTab: (tabId: string, options: RegisterSettingsTabOptions) => void;
 };
