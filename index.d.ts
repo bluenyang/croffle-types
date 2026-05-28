@@ -48,14 +48,22 @@ export interface FeatureContextMenu {
 }
 
 /** 설정 항목 스키마 (extension SDK / manifest 공용) */
-export type ConfigItemType = "string" | "number" | "boolean" | "select" | "path";
+export type ConfigItemType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "select"
+  | "path";
 
 export interface ConfigItemSchema<T = unknown> {
   type: ConfigItemType;
   label: string;
   description?: string;
   defaultValue: T;
-  options?: Array<{ label: string; value: T extends string | number ? T : never }>;
+  options?: Array<{
+    label: string;
+    value: T extends string | number ? T : never;
+  }>;
 }
 
 /** extension이 기여하는 설정 섹션 (선언형) */
@@ -280,9 +288,15 @@ export namespace tags {
 }
 
 export namespace schedules {
-  export function getAll(period: { start: string; end: string }): Promise<Schedule[]>;
+  export function getAll(period: {
+    start: string;
+    end: string;
+  }): Promise<Schedule[]>;
   export function create(data: Partial<Schedule>): Promise<Schedule>;
-  export function update(id: string, data: Partial<Schedule>): Promise<Schedule>;
+  export function update(
+    id: string,
+    data: Partial<Schedule>,
+  ): Promise<Schedule>;
   export function remove(id: string): Promise<boolean>;
   export function exportSchedulesToFile(period?: {
     start: string;
@@ -298,7 +312,11 @@ export namespace pluginInfo {
   export function getEnabled(): Promise<PluginInfo[]>;
   export function getByName(name: string): Promise<PluginInfo | null>;
   export function install(data: Partial<PluginInfo>): Promise<PluginInfo>;
-  export function toggle(name: string, enable: boolean): Promise<PluginInfo | null>;
+  export function installFromLocal(zipPath: string): Promise<PluginInfo>;
+  export function toggle(
+    name: string,
+    enable: boolean,
+  ): Promise<PluginInfo | null>;
   export function uninstall(name: string): Promise<boolean>;
 }
 
@@ -310,7 +328,9 @@ export namespace search {
 export namespace settings {
   export function getAll(): Promise<AppSettings>;
   export function getOf(key: string): Promise<AppSettings[keyof AppSettings]>;
-  export function update(newSettings: Partial<AppSettings>): Promise<AppSettings>;
+  export function update(
+    newSettings: Partial<AppSettings>,
+  ): Promise<AppSettings>;
 }
 
 /** 플러그인별 설정 저장소 (pluginStorage 기반) */
@@ -328,13 +348,19 @@ export namespace pluginSettings {
 
 export namespace pluginStorage {
   export function get(pluginId: string, key: string): Promise<string | null>;
-  export function set(pluginId: string, key: string, value: string): Promise<void>;
+  export function set(
+    pluginId: string,
+    key: string,
+    value: string,
+  ): Promise<void>;
 }
 
 export namespace os {
   export function showNotification(title: string, body: string): Promise<void>;
   export function getClipboard(): Promise<ClipboardResult>;
-  export function setClipboard(data: ClipboardTextData | ClipboardImageData): Promise<void>;
+  export function setClipboard(
+    data: ClipboardTextData | ClipboardImageData,
+  ): Promise<void>;
 }
 
 export namespace http {
@@ -352,7 +378,10 @@ export namespace http {
 
 export namespace event {
   export function emit(type: string, payload: unknown): void;
-  export function on(type: string, callback: (payload: unknown) => void): () => void;
+  export function on(
+    type: string,
+    callback: (payload: unknown) => void,
+  ): () => void;
 }
 
 export const base: {
@@ -393,7 +422,10 @@ export const enums: {
 };
 
 export const ui: {
-  registerView: (viewId: string, renderFn: (container: HTMLElement) => void) => void;
+  registerView: (
+    viewId: string,
+    renderFn: (container: HTMLElement) => void,
+  ) => void;
   registerContextMenu: (
     target: string,
     command: string,
@@ -404,5 +436,8 @@ export const ui: {
    * 설정 모달에 탭을 추가합니다.
    * @param tabId 고유 탭 ID (플러그인 ID와 조합해 `${pluginId}:${tabId}` 형태로 저장됨)
    */
-  registerSettingsTab: (tabId: string, options: RegisterSettingsTabOptions) => void;
+  registerSettingsTab: (
+    tabId: string,
+    options: RegisterSettingsTabOptions,
+  ) => void;
 };
