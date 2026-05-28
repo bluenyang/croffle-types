@@ -36,6 +36,7 @@ export interface FeatureView {
   url: string;
   active?: boolean;
   pluginName?: string;
+  pluginId?: string;
 }
 
 export interface FeatureContextMenu {
@@ -45,6 +46,7 @@ export interface FeatureContextMenu {
   condition?: (targetElement: HTMLElement | null) => boolean;
   disabled?: boolean;
   targetView?: string[];
+  pluginId?: string;
 }
 
 /** 설정 항목 스키마 (extension SDK / manifest 공용) */
@@ -312,7 +314,7 @@ export namespace pluginInfo {
   export function getEnabled(): Promise<PluginInfo[]>;
   export function getByName(name: string): Promise<PluginInfo | null>;
   export function install(data: Partial<PluginInfo>): Promise<PluginInfo>;
-  export function installFromLocal(zipPath: string): Promise<PluginInfo>;
+  export function installFromLocal(): Promise<PluginInfo | null>;
   export function toggle(
     name: string,
     enable: boolean,
